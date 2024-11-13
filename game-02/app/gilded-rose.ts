@@ -3,7 +3,7 @@ export class Item {
     sellIn: number;
     quality: number;
 
-    constructor(name, sellIn, quality) {
+    constructor(name: string, sellIn: number, quality: number) {
         this.name = name;
         this.sellIn = sellIn;
         this.quality = quality;
@@ -13,57 +13,100 @@ export class Item {
 export class GildedRose {
     items: Array<Item>;
 
-    constructor(items = [] as Array<Item>) {
+    constructor(items: Array<Item> = []) {
         this.items = items;
     }
 
-    updateQuality() {
-        for (let i = 0; i < this.items.length; i++) {
-            if (this.items[i].name != 'Aged Brie' && this.items[i].name != 'Backstage passes to a TAFKAL80ETC concert') {
-                if (this.items[i].quality > 0) {
-                    if (this.items[i].name != 'Sulfuras, Hand of Ragnaros') {
-                        this.items[i].quality = this.items[i].quality - 1
-                    }
-                }
-            } else {
-                if (this.items[i].quality < 50) {
-                    this.items[i].quality = this.items[i].quality + 1
-                    if (this.items[i].name == 'Backstage passes to a TAFKAL80ETC concert') {
-                        if (this.items[i].sellIn < 11) {
-                            if (this.items[i].quality < 50) {
-                                this.items[i].quality = this.items[i].quality + 1
-                            }
-                        }
-                        if (this.items[i].sellIn < 6) {
-                            if (this.items[i].quality < 50) {
-                                this.items[i].quality = this.items[i].quality + 1
-                            }
-                        }
-                    }
-                }
+    // Actualiza la calidad y el sellIn de los items
+    updateQuality(): Array<Item> {
+        for (const item of this.items) {
+            if (item.name === 'Sulfuras') {
+                continue;
             }
-            if (this.items[i].name != 'Sulfuras, Hand of Ragnaros') {
-                this.items[i].sellIn = this.items[i].sellIn - 1;
-            }
-            if (this.items[i].sellIn < 0) {
-                if (this.items[i].name != 'Aged Brie') {
-                    if (this.items[i].name != 'Backstage passes to a TAFKAL80ETC concert') {
-                        if (this.items[i].quality > 0) {
-                            if (this.items[i].name != 'Sulfuras, Hand of Ragnaros') {
-                                this.items[i].quality = this.items[i].quality - 1
-                            }
-                        }
-                    } else {
-                        this.items[i].quality = this.items[i].quality - this.items[i].quality
-                    }
-                } else {
-                    if (this.items[i].quality < 50) {
-                        this.items[i].quality = this.items[i].quality + 1
-                    }
-                }
+
+            this.updateItem(item);
+
+            if (item.sellIn < 0) {
+                this.handleExpiredItem(item);
             }
         }
-
         return this.items;
+    }
+
+    // Actualiza la calidad de un item basado en su tipo
+    private updateItem(item: Item): void {
+        switch (true) {
+            case item.name === 'Aged Brie':
+                this.updateAgedBrie(item);
+                break;
+            case item.name === 'Backstage passes':
+                this.updateBackstagePasses(item);
+                break;
+            case item.name.indexOf('Conjured') === 0:
+                this.updateConjuredItem(item);
+                break;
+            default:
+                this.updateNormalItem(item);
+                break;
+        }
+        item.sellIn -= 1;
+    }
+
+    // Aumenta la calidad de Aged Brie
+    private updateAgedBrie(item: Item): void {
+        if (item.quality < 50) {
+            item.quality += 1;
+        }
+    }
+
+    // Actualiza la calidad de Backstage passes
+    private updateBackstagePasses(item: Item): void {
+        if (item.quality < 50) {
+            item.quality += 1;
+            if (item.sellIn < 11 && item.quality < 50) {
+                item.quality += 1;
+            }
+            if (item.sellIn < 6 && item.quality < 50) {
+                item.quality += 1;
+            }
+        }
+    }
+
+    // Disminuye la calidad de los items Conjured
+    private updateConjuredItem(item: Item): void {
+        if (item.quality > 0) {
+            item.quality -= 2;
+        }
+    }
+
+    // Disminuye la calidad de los items normales
+    private updateNormalItem(item: Item): void {
+        if (item.quality > 0) {
+            item.quality -= 1;
+        }
+    }
+
+    // Maneja la degradación de items expirados
+    private handleExpiredItem(item: Item): void {
+        switch (true) {
+            case item.name === 'Aged Brie':
+                if (item.quality < 50) {
+                    item.quality += 1;
+                }
+                break;
+            case item.name === 'Backstage passes':
+                item.quality = 0;
+                break;
+            case item.name.indexOf('Conjured') === 0:
+                if (item.quality > 0) {
+                    item.quality -= 2;
+                }
+                break;
+            default:
+                if (item.quality > 0) {
+                    item.quality -= 1;
+                }
+                break;
+        }
     }
 }
